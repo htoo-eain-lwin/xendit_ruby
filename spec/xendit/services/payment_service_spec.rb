@@ -79,6 +79,8 @@ RSpec.describe Xendit::Services::PaymentService do
         )
         expect(query_params).not_to have_key(:created_gte)
         expect(query_params).not_to have_key(:created_lte)
+        expect(query_params).not_to have_key(:updated_gte)
+        expect(query_params).not_to have_key(:updated_lte)
       end
     end
   end
@@ -109,8 +111,8 @@ RSpec.describe Xendit::Services::PaymentService do
     end
 
     it 'raises ValidationError when amount is missing' do
-      expect { subject.simulate(payment_method_id, {}) }
-        .to raise_error(Xendit::Errors::ValidationError, /amount.*required/)
+      expect { subject.simulate(payment_method_id, amount: nil) }
+        .to raise_error(Xendit::Errors::ValidationError, /Missing required parameters: amount/)
     end
   end
 end

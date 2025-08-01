@@ -20,7 +20,9 @@ module Xendit
 
       # Simulate payment (test mode only)
       def simulate(payment_method_id, amount:)
-        validate_required_params!({ amount: amount }, %w[amount])
+        if amount.nil?
+          raise Errors::ValidationError, 'Missing required parameters: amount'
+        end
 
         path = "/v2/payment_methods/#{payment_method_id}/payments/simulate"
         body = { amount: amount }
@@ -36,19 +38,29 @@ module Xendit
       private
 
       def build_list_params(params)
-        cleaned_params = super(params)
+        cleaned_params = params.compact
 
         # Handle date range parameters with proper bracketed format
-        %w[created updated].each do |field|
-          if cleaned_params["#{field}_gte"]
-            cleaned_params["#{field}[gte]"] = cleaned_params.delete("#{field}_gte")
-          end
-          if cleaned_params["#{field}_lte"]
-            cleaned_params["#{field}[lte]"] = cleaned_params.delete("#{field}_lte")
+        # Convert symbol keys to string keys and transform them
+        transformed_params = {}
+
+        cleaned_params.each do |key, value|
+          key_str = key.to_s
+          case key_str
+          when 'created_gte'
+            transformed_params['created[gte]'] = value
+          when 'created_lte'
+            transformed_params['created[lte]'] = value
+          when 'updated_gte'
+            transformed_params['updated[gte]'] = value
+          when 'updated_lte'
+            transformed_params['updated[lte]'] = value
+          else
+            transformed_params[key] = value
           end
         end
 
-        cleaned_params
+        transformed_params
       end
     end
   end

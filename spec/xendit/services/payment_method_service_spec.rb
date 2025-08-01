@@ -238,7 +238,7 @@ RSpec.describe Xendit::Services::PaymentMethodService do
     end
 
     it 'raises ValidationError when auth_code is missing' do
-      expect { subject.authorize(payment_method_id, {}) }
+      expect { subject.authorize(payment_method_id, auth_code: nil) }
         .to raise_error(Xendit::Errors::ValidationError, /auth_code.*required/)
     end
   end

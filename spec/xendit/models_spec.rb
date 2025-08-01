@@ -46,7 +46,7 @@ RSpec.describe 'Xendit Models' do
       end
 
       it 'returns false for different class' do
-        other = Xendit::Models::Payment.new(attributes)
+        other = Class.new(Xendit::Models::Base).new(attributes)
         expect(subject).not_to eq(other)
       end
     end

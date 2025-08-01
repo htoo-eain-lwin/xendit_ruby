@@ -64,7 +64,7 @@ module Xendit
       end
 
       # Authorize payment method (for account linking)
-      def authorize(id, auth_code:, headers = {})
+      def authorize(id, auth_code:, headers: {})
         validate_required_params!({ auth_code: auth_code }, %w[auth_code])
 
         path = "/v2/payment_methods/#{id}/auth"

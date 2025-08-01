@@ -33,7 +33,7 @@ module Xendit
       end
 
       # Authorize payment request (for direct debit OTP validation)
-      def authorize(id, auth_code:, headers = {})
+      def authorize(id, auth_code:, headers: {})
         validate_required_params!({ auth_code: auth_code }, %w[auth_code])
 
         path = "/payment_requests/#{id}/auth"
@@ -44,7 +44,7 @@ module Xendit
         Models::PaymentRequest.new(response)
       end
 
-      # Resend auth for payment request (for certain direct debit channels)
+      # Resend authorization
       def resend_auth(id, headers = {})
         path = "/payment_requests/#{id}/auth/resend"
         request_headers = build_headers(headers)
