@@ -34,7 +34,7 @@ module Xendit
       @client ||= Client.new(configuration)
     end
 
-    # Service accessors
+    # Service accessors with proper instantiation
     def payments
       @payments ||= Services::PaymentService.new(client)
     end
@@ -53,6 +53,17 @@ module Xendit
 
     def customers
       @customers ||= Services::CustomerService.new(client)
+    end
+
+    # Reset all cached instances (useful for testing)
+    def reset!
+      @configuration = nil
+      @client = nil
+      @payments = nil
+      @payment_requests = nil
+      @payment_methods = nil
+      @refunds = nil
+      @customers = nil
     end
   end
 end

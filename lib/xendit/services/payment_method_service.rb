@@ -22,7 +22,7 @@ module Xendit
       # List payment methods
       def list(params = {})
         query_params = build_list_params(params.slice(
-          :type, :reusability, :reference_id, :customer_id,
+          :id, :type, :reusability, :reference_id, :customer_id,
           :limit, :after_id, :before_id
         ))
 
@@ -49,11 +49,17 @@ module Xendit
       # Expire payment method
       def expire(id, params = {})
         path = "/v2/payment_methods/#{id}/expire"
+
+        # Build query parameters for KTB direct debit channels
         query_params = params.slice(:success_return_url, :failure_return_url).compact
         headers = build_headers(params)
 
-        full_path = query_params.empty? ? path : "#{path}?#{URI.encode_www_form(query_params)}"
-        response = client.post(full_path, {}, headers)
+        # Add query parameters to path if present
+        unless query_params.empty?
+          path += "?#{URI.encode_www_form(query_params)}"
+        end
+
+        response = client.post(path, {}, headers)
         Models::PaymentMethod.new(response)
       end
 
@@ -75,18 +81,52 @@ module Xendit
         required_keys = %w[type reusability]
         validate_required_params!(params, required_keys)
 
+        # Validate customer requirements based on type and reusability
+        validate_customer_requirements!(params)
+
         # Validate type-specific requirements
-        case params[:type]
+        validate_type_specific_requirements!(params)
+      end
+
+      def validate_customer_requirements!(params)
+        type = params[:type]
+        reusability = params[:reusability]
+
+        requires_customer = false
+
+        # Direct debit always requires customer
+        if type == 'DIRECT_DEBIT'
+          requires_customer = true
+        end
+
+        # Multiple use ewallets require customer
+        if type == 'EWALLET' && reusability == 'MULTIPLE_USE'
+          requires_customer = true
+        end
+
+        return unless requires_customer
+
+        if !params[:customer_id] && !params[:customer]
+          raise Errors::ValidationError, 'customer_id or customer object is required for this payment method'
+        end
+      end
+
+      def validate_type_specific_requirements!(params)
+        type = params[:type]
+
+        case type
         when 'DIRECT_DEBIT'
-          validate_required_params!(params, %w[customer_id]) unless params[:customer]
           validate_required_params!(params, %w[direct_debit])
         when 'EWALLET'
-          if params[:reusability] == 'MULTIPLE_USE'
-            validate_required_params!(params, %w[customer_id]) unless params[:customer]
-          end
           validate_required_params!(params, %w[ewallet])
         when 'CARD'
           validate_required_params!(params, %w[card])
+        when 'OVER_THE_COUNTER'
+          validate_required_params!(params, %w[over_the_counter])
+        when 'VIRTUAL_ACCOUNT'
+          validate_required_params!(params, %w[virtual_account])
+        when 'QR_CODE'
+          validate_required_params!(params, %w[qr_code])
         end
       end
 
@@ -110,10 +150,19 @@ module Xendit
       def build_customer_object(customer_params)
         customer_obj = customer_params.slice(:reference_id, :type, :email, :mobile_number).compact
 
+        # Handle individual detail
         if customer_params[:individual_detail]
           customer_obj[:individual_detail] = customer_params[:individual_detail].slice(
             :given_names, :surname, :nationality, :place_of_birth,
             :date_of_birth, :gender
+          ).compact
+        end
+
+        # Handle business detail (if needed)
+        if customer_params[:business_detail]
+          customer_obj[:business_detail] = customer_params[:business_detail].slice(
+            :business_name, :trading_name, :business_type, :nature_of_business,
+            :business_domicile, :date_of_registration
           ).compact
         end
 

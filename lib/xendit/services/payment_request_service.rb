@@ -21,7 +21,9 @@ module Xendit
 
       # List payment requests
       def list(params = {})
-        query_params = build_list_params(params)
+        query_params = build_list_params(params.slice(
+          :id, :reference_id, :customer_id, :limit, :after_id, :before_id
+        ))
         response = client.get('/payment_requests', query_params)
 
         {
@@ -42,16 +44,54 @@ module Xendit
         Models::PaymentRequest.new(response)
       end
 
+      # Resend auth for payment request (for certain direct debit channels)
+      def resend_auth(id, headers = {})
+        path = "/payment_requests/#{id}/auth/resend"
+        request_headers = build_headers(headers)
+
+        response = client.post(path, {}, request_headers)
+        Models::PaymentRequest.new(response)
+      end
+
       private
 
       def validate_create_params!(params)
+        # Either payment_method or payment_method_id is required
         if !params[:payment_method] && !params[:payment_method_id]
           raise Errors::ValidationError, 'Either payment_method or payment_method_id is required'
         end
 
+        # Validate payment method structure if provided
         if params[:payment_method]
           required_pm_keys = %w[type reusability]
           validate_required_params!(params[:payment_method], required_pm_keys)
+        end
+
+        # Customer ID is required for direct debit and multiple use ewallets
+        validate_customer_requirements!(params)
+      end
+
+      def validate_customer_requirements!(params)
+        payment_method = params[:payment_method] || {}
+        type = payment_method[:type]
+        reusability = payment_method[:reusability]
+
+        requires_customer = false
+
+        # Direct debit always requires customer
+        if type == 'DIRECT_DEBIT'
+          requires_customer = true
+        end
+
+        # Multiple use ewallets require customer
+        if type == 'EWALLET' && reusability == 'MULTIPLE_USE'
+          requires_customer = true
+        end
+
+        return unless requires_customer
+
+        if !params[:customer_id] && !params[:customer]
+          raise Errors::ValidationError, 'customer_id or customer object is required for this payment method'
         end
       end
 
@@ -59,7 +99,7 @@ module Xendit
         body = params.slice(
           :currency, :amount, :reference_id, :customer_id, :customer,
           :country, :description, :payment_method, :payment_method_id,
-          :capture_method, :channel_properties, :shipping_information,
+          :capture_method, :initiator, :channel_properties, :shipping_information,
           :items, :metadata
         ).compact
 
@@ -77,6 +117,7 @@ module Xendit
       def build_customer_object(customer_params)
         customer_obj = customer_params.slice(:reference_id, :type, :email, :mobile_number).compact
 
+        # Handle individual detail
         if customer_params[:individual_detail]
           customer_obj[:individual_detail] = customer_params[:individual_detail].slice(
             :given_names, :surname, :nationality, :place_of_birth,
@@ -84,6 +125,7 @@ module Xendit
           ).compact
         end
 
+        # Handle business detail
         if customer_params[:business_detail]
           customer_obj[:business_detail] = customer_params[:business_detail].slice(
             :business_name, :trading_name, :business_type, :nature_of_business,
