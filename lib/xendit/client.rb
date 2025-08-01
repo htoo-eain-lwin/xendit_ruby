@@ -1,4 +1,5 @@
 require 'uri'
+require 'base64'
 
 module Xendit
   class Client
@@ -17,6 +18,7 @@ module Xendit
         conn.options.timeout = @config.timeout
         conn.options.open_timeout = @config.open_timeout
 
+        # Use Basic Auth with API key as username and empty password
         conn.request :authorization, :basic, @config.api_key, ''
       end
     end
@@ -74,7 +76,7 @@ module Xendit
 
     def handle_client_error(response)
       body = response.body
-      error_code = body.dig('error_code') if body.is_a?(Hash)
+      error_code = body['error_code'] if body.is_a?(Hash)
 
       case error_code
       when 'API_VALIDATION_ERROR'
@@ -83,6 +85,20 @@ module Xendit
         raise Errors::DuplicateError, extract_error_message(response)
       when 'INSUFFICIENT_BALANCE'
         raise Errors::InsufficientBalanceError, extract_error_message(response)
+      when 'IDEMPOTENCY_ERROR'
+        raise Errors::IdempotencyError, extract_error_message(response)
+      when 'CHANNEL_NOT_ACTIVATED'
+        raise Errors::ChannelNotActivatedError, extract_error_message(response)
+      when 'FEATURE_NOT_ACTIVATED'
+        raise Errors::FeatureNotActivatedError, extract_error_message(response)
+      when 'INVALID_PAYMENT_METHOD'
+        raise Errors::InvalidPaymentMethodError, extract_error_message(response)
+      when 'CUSTOMER_NOT_FOUND_ERROR'
+        raise Errors::CustomerNotFoundError, extract_error_message(response)
+      when 'MAX_AMOUNT_LIMIT_ERROR'
+        raise Errors::MaxAmountLimitError, extract_error_message(response)
+      when 'ACCOUNT_ACCESS_BLOCKED'
+        raise Errors::AccountAccessBlockedError, extract_error_message(response)
       else
         raise Errors::BadRequestError, extract_error_message(response)
       end

@@ -25,13 +25,42 @@ module Xendit
         required_keys = %w[reference_id type]
         validate_required_params!(params, required_keys)
 
-        if params[:type] == 'INDIVIDUAL' && !params[:individual_detail]
-          raise Errors::ValidationError, 'individual_detail is required for INDIVIDUAL type'
-        end
+        # Validate customer type
+        validate_customer_type!(params[:type])
 
-        if params[:type] == 'BUSINESS' && !params[:business_detail]
-          raise Errors::ValidationError, 'business_detail is required for BUSINESS type'
+        # Validate type-specific requirements
+        case params[:type]
+        when 'INDIVIDUAL'
+          unless params[:individual_detail]
+            raise Errors::ValidationError, 'individual_detail is required for INDIVIDUAL type'
+          end
+
+          validate_individual_detail!(params[:individual_detail])
+        when 'BUSINESS'
+          raise Errors::ValidationError, 'business_detail is required for BUSINESS type' unless params[:business_detail]
+
+          validate_business_detail!(params[:business_detail])
         end
+      end
+
+      def validate_individual_detail!(detail)
+        # given_names is required for individual detail
+        raise Errors::ValidationError, 'given_names is required in individual_detail' unless detail[:given_names]
+
+        # Validate gender if provided
+        return unless detail[:gender]
+
+        allowed_genders = %w[MALE FEMALE OTHER]
+        validate_enum_param!('gender', detail[:gender], allowed_genders)
+      end
+
+      def validate_business_detail!(detail)
+        required_keys = %w[business_name business_type]
+        validate_required_params!(detail, required_keys)
+
+        # Validate business type
+        allowed_types = %w[CORPORATION SOLE_PROPRIETOR PARTNERSHIP COOPERATIVE TRUST NON_PROFIT GOVERNMENT]
+        validate_enum_param!('business_type', detail[:business_type], allowed_types)
       end
 
       def build_create_body(params)

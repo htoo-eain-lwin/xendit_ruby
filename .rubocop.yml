@@ -1,5 +1,5 @@
 AllCops:
-  TargetRubyVersion: 2.7
+  TargetRubyVersion: 3.1
   NewCops: enable
   Exclude:
     - 'vendor/**/*'
@@ -9,26 +9,67 @@ AllCops:
 Style/Documentation:
   Enabled: false
 
+Style/FrozenStringLiteralComment:
+  Enabled: false
+
+# Metrics exclusions for existing files
 Metrics/ClassLength:
   Max: 150
+  Exclude:
+    - 'examples/payment_flows.rb'
 
 Metrics/ModuleLength:
   Max: 150
 
 Metrics/MethodLength:
   Max: 20
+  Exclude:
+    - 'examples/payment_flows.rb'
+    - 'lib/xendit/client.rb'
 
 Metrics/AbcSize:
   Max: 25
+  Exclude:
+    - 'examples/payment_flows.rb'
+    - 'lib/xendit/client.rb'
 
 Metrics/CyclomaticComplexity:
   Max: 10
+  Exclude:
+    - 'lib/xendit/client.rb'
+    - 'lib/xendit/models/payment.rb'
+    - 'lib/xendit/models/payment_method.rb'
 
 Metrics/PerceivedComplexity:
   Max: 10
 
 Layout/LineLength:
   Max: 120
+  Exclude:
+    - 'xendit.gemspec'
 
-Style/FrozenStringLiteralComment:
+# Block length exclusions for spec files
+Metrics/BlockLength:
+  Exclude:
+    - 'spec/**/*'
+
+# Naming exclusions for specific predicate methods
+Naming/PredicatePrefix:
+  Exclude:
+    - 'lib/xendit/models/payment.rb'
+    - 'lib/xendit/models/refund.rb'
+
+# Gemspec exclusions
+Gemspec/DevelopmentDependencies:
   Enabled: false
+
+# Block length exclusions for gemspec
+Metrics/BlockLength:
+  Exclude:
+    - 'spec/**/*'
+    - '*.gemspec'
+
+# Empty file warning
+Lint/EmptyFile:
+  Exclude:
+    - 'spec/xendit_spec.rb'

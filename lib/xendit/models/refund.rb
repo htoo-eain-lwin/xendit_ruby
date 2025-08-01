@@ -27,6 +27,38 @@ module Xendit
       def pending?
         status == 'PENDING'
       end
+
+      # Check if refund has fee
+      def has_refund_fee?
+        !refund_fee_amount.nil? && refund_fee_amount.positive?
+      end
+
+      # Check if refund was requested by customer
+      def customer_requested?
+        reason == 'REQUESTED_BY_CUSTOMER'
+      end
+
+      # Check if refund was due to fraud
+      def fraudulent?
+        reason == 'FRAUDULENT'
+      end
+
+      # Check if refund was due to duplicate
+      def duplicate?
+        reason == 'DUPLICATE'
+      end
+
+      # Check if refund was due to cancellation
+      def cancellation?
+        reason == 'CANCELLATION'
+      end
+
+      # Get net refund amount (after fees)
+      def net_refund_amount
+        return amount unless has_refund_fee?
+
+        amount - refund_fee_amount
+      end
     end
   end
 end

@@ -3,18 +3,18 @@ require_relative 'lib/xendit/version'
 Gem::Specification.new do |spec|
   spec.name          = 'xendit-ruby'
   spec.version       = Xendit::VERSION
-  spec.authors       = ['Your Name']
-  spec.email         = ['your.email@example.com']
+  spec.authors       = ['Htoo']
+  spec.email         = ['htooeainlwin12@gmail.com']
 
   spec.summary       = 'Ruby SDK for Xendit Payment Gateway API'
   spec.description   = 'A comprehensive Ruby gem for integrating with Xendit payment gateway services including payments, refunds, and payment methods.'
-  spec.homepage      = 'https://github.com/yourusername/xendit-ruby'
+  spec.homepage      = 'https://github.com/htoo-eain-lwin/xendit-ruby'
   spec.license       = 'MIT'
-  spec.required_ruby_version = '>= 2.7.0'
+  spec.required_ruby_version = '>= 3.1.0'
 
   spec.metadata['homepage_uri'] = spec.homepage
-  spec.metadata['source_code_uri'] = 'https://github.com/yourusername/xendit-ruby'
-  spec.metadata['changelog_uri'] = 'https://github.com/yourusername/xendit-ruby/blob/main/CHANGELOG.md'
+  spec.metadata['source_code_uri'] = 'https://github.com/htoo-eain-lwin/xendit-ruby'
+  spec.metadata['changelog_uri'] = 'https://github.com/htoo-eain-lwin/xendit-ruby/blob/main/CHANGELOG.md'
   spec.metadata['rubygems_mfa_required'] = 'true'
 
   spec.files = Dir.chdir(File.expand_path(__dir__)) do
@@ -31,7 +31,7 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency 'bundler', '~> 2.0'
   spec.add_development_dependency 'rake', '~> 13.0'
   spec.add_development_dependency 'rspec', '~> 3.0'
-  spec.add_development_dependency 'webmock', '~> 3.18'
   spec.add_development_dependency 'rubocop', '~> 1.50'
   spec.add_development_dependency 'vcr', '~> 6.1'
+  spec.add_development_dependency 'webmock', '~> 3.18'
 end

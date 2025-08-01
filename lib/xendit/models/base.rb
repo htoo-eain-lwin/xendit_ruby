@@ -15,7 +15,7 @@ module Xendit
       end
 
       def ==(other)
-        other.is_a?(self.class) && to_h == other.to_h
+        other.class == self.class && to_h == other.to_h
       end
 
       def [](key)
